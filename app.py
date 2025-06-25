@@ -13,16 +13,12 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausa
 import torch
 
 try:
-    # API key ko environment variable se load karein
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
-    if gemini_api_key:
-        import google.generativeai as genai
-        genai.configure(api_key=gemini_api_key)
-        logging.info("Google Generative AI library loaded and configured from environment variable.")
-        GEMINI_API_AVAILABLE = True
-    else:
-        logging.warning("GEMINI_API_KEY environment variable not set. Gemini functions will not work.")
-        GEMINI_API_AVAILABLE = False
+    import google.generativeai as genai
+    # *** YAHAN CHANGE KIYA GAYA HAI ***
+    # API key ko environment variable se load kiya ja raha hai
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    logging.info("Google Generative AI library loaded and configured.")
+    GEMINI_API_AVAILABLE = True
 except ImportError:
     logging.warning("Google Generative AI library not found. Gemini functions will not work.")
     GEMINI_API_AVAILABLE = False
