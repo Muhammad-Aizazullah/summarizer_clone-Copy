@@ -1,0 +1,21 @@
+cd C:\Users\Hp\Desktop\summarizer_clone
+.\venv\Scripts\activate
+python app.py
+
+
+
+
+
+http://127.0.0.1:5000
+
+
+
+
+
+
+
+
+https://smmry.com/
+https://www.summarizer.org/
+https://www.tools4noobs.com/online_tools/
+https://www.summarizer.org/

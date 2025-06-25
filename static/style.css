@@ -1,0 +1,869 @@
+/* --- General Styling --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
+}
+
+.section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 50px 30px;
+}
+
+.section-heading {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1a237e;
+    margin-bottom: 40px;
+}
+
+/* --- Navigation Bar --- */
+nav {
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 15px 30px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.nav-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #6a11cb;
+}
+.nav-links a {
+    margin-left: 25px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+.nav-links a:hover {
+    color: #2575fc;
+}
+.nav-links a.active { /* Style for active navigation link */
+    color: #6a1b9a;
+    font-weight: 600;
+}
+
+/* --- Hero Section (Summarizer Tool) --- */
+#hero {
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+}
+
+/* --- Text Area and Controls Styling (General for all tools) --- */
+/* This combines styles from original index.html and specific tool HTMLs */
+.summarizer-grid { /* Specific to summarizer.html and plagiarism_checker.html's main grid */
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.text-area-container { /* Specific to summarizer.html and plagiarism_checker.html */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Common text area styling for all tools */
+textarea {
+    width: 100%;
+    min-height: 200px; /* Default minimum height for all text areas */
+    border: 2px solid #dfe6e9;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6; /* Added for better readability in all textareas */
+    resize: vertical;
+    transition: border-color 0.3s, box-shadow 0.3s, height 0.3s ease;
+    color: #444; /* Consistent text color */
+}
+textarea:focus {
+    outline: none;
+    border-color: #6a11cb;
+    box-shadow: 0 0 0 4px rgba(106, 17, 203, 0.1);
+}
+/* Output text areas often have a slightly different background */
+#outputText,
+#descriptionOutput,
+#storyOutput,
+#essayOutput,
+#newsOutput {
+    background-color: #f8f9fa;
+    cursor: default; /* Make it clear it's read-only */
+}
+
+.counter { /* Word counters */
+    text-align: right;
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 8px;
+    height: 20px; /* Ensure space even if no text */
+}
+
+/* Controls section layout for summarizer.html */
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 20px 0;
+}
+.slider-container { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+}
+.slider-container label { 
+    font-weight: 500; 
+}
+input[type="range"] { 
+    width: 150px; /* Adjust slider width */
+}
+
+/* --- Combined and Harmonized Button Styling (for all primary action buttons) --- */
+/* This class will be applied to all primary action buttons */
+.primary-button {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 600; /* Bolder weight for all primary buttons */
+    color: #fff;
+    background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); /* Consistent gradient */
+    border: none;
+    border-radius: 50px; /* Consistent rounded pills shape */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    /* For buttons within .action-buttons or .controls: */
+    margin-top: 15px; /* Add some space above the button, can be overridden by parent flexbox */
+    text-transform: uppercase; /* All caps for primary buttons */
+    letter-spacing: 0.5px;
+}
+
+.primary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(90deg, #2575fc 0%, #6a11cb 100%); /* Reverse gradient on hover */
+}
+
+.primary-button:disabled {
+    cursor: not-allowed;
+    background: #bdc3c7; /* Grey background when disabled */
+    box-shadow: none;
+    transform: none;
+    opacity: 0.7;
+}
+
+/* Loader and Error Message styles */
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #6a1b9a;
+    border-radius: 50%;
+    width: 40px; /* Increased size for visibility */
+    height: 40px;
+    animation: spin 1s linear infinite;
+    display: none; /* Hidden by default */
+    margin: 20px auto; /* Center loader */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    color: #d32f2f;
+    background-color: #ffebee;
+    border: 1px solid #ef9a9a;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.95rem;
+    display: none; /* Hidden by default */
+}
+
+
+/* --- AI Detection Result Bar (Textual) - Used by Plagiarism Checker --- */
+.ai-detection-result {
+    padding: 15px 20px;
+    margin-top: 20px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    color: #333;
+    background-color: #f0f0f0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- Plagiarism Overall Result (Graphical) - Used by Plagiarism Checker --- */
+.result-charts {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.result-charts h3 {
+    font-size: 1.8rem;
+    color: #1a237e;
+    margin-bottom: 30px;
+}
+
+.chart-container {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    flex-wrap: wrap;
+}
+
+.pie-chart {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: #ddd;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: background 0.5s ease-out;
+    overflow: hidden;
+}
+
+.pie-chart::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    z-index: 1;
+}
+
+.chart-label {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1a237e;
+    z-index: 2;
+}
+
+.chart-text {
+    font-size: 0.95rem;
+    color: #555;
+    margin-top: 5px;
+    z-index: 2;
+}
+
+
+/* --- Features Section --- */
+.features-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+.feature-card {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    text-align: center;
+    flex-basis: 300px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+.feature-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: #1a237e;
+}
+.feature-icon {
+    font-size: 3rem;
+    color: #6a11cb;
+    margin-bottom: 15px;
+}
+
+/* --- How It Works Section --- */
+#how-it-works {
+    background-color: #ffffff;
+}
+.steps-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+.step {
+    text-align: center;
+    flex-basis: 250px;
+}
+.step .step-number {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+.step h4 {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+/* --- More Tools Section (used on index.html) --- */
+#more-tools {
+    background-color: #f4f7f9;
+}
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+.tool-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 25px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-decoration: none;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+.tool-card i { /* Targeting the Font Awesome icon directly */
+    font-size: 2.5rem;
+    color: #2575fc;
+    margin-bottom: 10px;
+}
+/* For emoji icons that might be used as tool-icon div */
+.tool-card .tool-icon {
+    font-size: 2.5rem; /* Larger size for emoji icons */
+    margin-bottom: 10px;
+}
+
+.tool-card h3 {
+    font-size: 1.1rem;
+    color: #1a237e;
+    margin-bottom: 5px;
+}
+.tool-card p {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+
+/* --- FAQ Section --- */
+.faq-item {
+    background: #fff;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.faq-question {
+    padding: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #1a237e;
+}
+.faq-question i {
+    font-size: 1.5rem;
+    transition: transform 0.3s;
+    color: #6a1b9a;
+}
+.faq-item.active .faq-question i {
+    transform: rotate(45deg);
+}
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 20px;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    background-color: #f9f9f9;
+    border-top: 1px solid #eee;
+}
+.faq-item.active .faq-answer {
+    max-height: 200px; /* Adjust as needed, will expand via JS scrollHeight */
+    padding: 0 20px 20px 20px;
+}
+.faq-answer p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+    color: #555;
+}
+
+/* --- New Comprehensive Footer Styling --- */
+.main-footer {
+    background-color: #1a237e;
+    color: #f0f0f0;
+    padding-top: 60px;
+    margin-top: 60px;
+    font-size: 0.95rem;
+}
+
+.footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-column {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px;
+}
+
+.footer-logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.footer-logo .logo-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.brand-info p {
+    line-height: 1.6;
+    margin-bottom: 15px;
+    color: #ccc;
+}
+
+.contact-info a {
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.contact-info p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.contact-info a:hover {
+    color: #2575fc;
+}
+
+.footer-column h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.footer-column h4::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -5px;
+    width: 50px;
+    height: 3px;
+    background-color: #2575fc;
+    border-radius: 2px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 10px;
+}
+
+.footer-column ul li a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-column ul li a:hover {
+    color: #2575fc;
+}
+
+.language-selector select {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%20viewBox%3D%220%200%20292.4%20292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%20197.8L159.2%2069.9c-2.8-2.8-7.3-2.8-10.1%200L5.4%20197.8c-2.8%202.8-2.8%207.3%200%2010.1s7.3%202.8%2010.1%200l144.5-144.5%20144.5%20144.5c2.8%202.8%207.3%202.8%2010.1%200S289.8%20200.6%20287%20197.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+.language-selector select option {
+    background-color: #1a237e;
+    color: #fff;
+}
+
+.footer-bottom {
+    background-color: #111a4b;
+    padding: 20px 0;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-bottom-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons a {
+    color: #fff;
+    font-size: 1.2rem;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.social-icons a:hover {
+    background-color: #2575fc;
+    transform: translateY(-3px);
+}
+
+/* --- Generic Tool Container Styling (used by various tool pages) --- */
+.tool-section .tool-container { /* Specificity for tool pages */
+    display: flex;
+    flex-direction: column; /* Default stack vertically for inputs/outputs */
+    gap: 25px;
+    margin-top: 40px;
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px; /* Consistent with other cards */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08); /* Consistent shadow */
+    align-items: center; /* Center items within the tool container */
+    width: 100%;
+    max-width: 900px; /* Limit overall width for tool sections */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.input-group, .output-group, .text-area-group {
+    width: 100%; /* Full width for these groups within tool container */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    flex: 1; /* Allows them to take equal space in a row layout if parent changed to row */
+}
+
+.input-group label, .output-group label, .text-area-group label {
+    font-weight: 500; /* Consistent font weight for labels */
+    color: #333; /* Consistent color for labels */
+    font-size: 1.1rem; /* Consistent font size for labels */
+}
+
+.input-group input[type="text"],
+.input-group select,
+.input-group input[type="number"], /* For trending news */
+.output-group textarea,
+.text-area-group textarea {
+    width: 100%;
+    padding: 15px; /* Consistent padding */
+    border: 1px solid #e0e0e0; /* Consistent border */
+    border-radius: 8px; /* Consistent border-radius */
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif; /* Ensure Poppins font */
+    color: #444; /* Consistent text color */
+    transition: border-color 0.3s ease;
+}
+.input-group input[type="text"]:focus,
+.input-group select:focus,
+.input-group input[type="number"]:focus,
+.output-group textarea:focus,
+.text-area-group textarea:focus {
+    outline: none;
+    border-color: #6a1b9a;
+    box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.2);
+}
+
+/* Adjust textarea min-height for specific tools that need more space */
+/* Overrides the general textarea min-height */
+/* Essay and Trending News need more vertical space */
+#essayOutput, #newsOutput {
+    min-height: 300px;
+}
+/* Story and Product Description can be a bit less than essay */
+#storyOutput, #descriptionOutput {
+    min-height: 250px;
+}
+
+
+.word-counter {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 0.9rem;
+    color: #777;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 2px 8px;
+    border-radius: 5px;
+    z-index: 5; /* Ensure it's above the textarea content */
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically by default in action-buttons */
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    width: 100%; /* Take full width of parent tool-container */
+}
+/* Ensure the primary button within action-buttons also takes full width on small screens */
+.action-buttons .primary-button {
+    width: fit-content; /* Reset for desktop, responsive media query will handle smaller screens */
+}
+
+
+/* Specific styles for Slogan Generator (if it uses a list for output) */
+.slogan-list {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 100px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    list-style: none;
+    text-align: left;
+    width: 100%; /* Ensure it takes full width of tool-container */
+}
+
+.slogan-list li {
+    padding: 10px 15px;
+    background-color: #e8eaf6;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    color: #3f51b5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .summarizer-grid {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .section-container {
+        padding: 30px 20px;
+    }
+
+    .section-heading {
+        font-size: 2rem;
+        margin-bottom: 30px;
+    }
+
+    /* Mobile Nav Toggle */
+    .nav-links {
+        display: none; /* Hidden by default for hamburger menu */
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        top: 60px; /* Below the nav bar */
+        left: 0;
+        background-color: #ffffff;
+        box-shadow: 0 8px 10px rgba(0,0,0,0.1);
+        padding: 10px 0;
+        z-index: 999;
+    }
+    .nav-links.active { /* Show nav links when active */
+        display: flex;
+    }
+    .nav-links a {
+        margin: 5px 0;
+        padding: 10px 20px;
+        text-align: center;
+        width: 100%;
+    }
+    .nav-toggle { /* Show hamburger icon */
+        display: block;
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #333;
+    }
+    nav { /* Adjust nav for mobile when menu is active */
+        flex-wrap: wrap; /* Allow nav items to wrap */
+    }
+
+
+    /* Footer Responsive Adjustments */
+    .footer-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-column {
+        min-width: 100%;
+        padding: 10px 0;
+    }
+
+    .footer-column h4::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .contact-info {
+        justify-content: center;
+    }
+
+    .language-selector select {
+        width: 80%;
+        margin: 0 auto;
+    }
+
+    .footer-bottom-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .chart-container {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .pie-chart {
+        width: 150px;
+        height: 150px;
+    }
+
+    .pie-chart::after {
+        width: 100px;
+        height: 100px;
+    }
+
+    .chart-label {
+        font-size: 2rem;
+    }
+
+    /* Tool-specific responsive adjustments */
+    /* This applies to all tool-containers now that styles are centralized */
+    .tool-section .tool-container {
+        padding: 25px;
+        margin-top: 25px;
+    }
+    /* Universal text area adjustment for smaller screens */
+    textarea {
+        min-height: 150px; /* General smaller height for text areas on mobile */
+    }
+    /* Specific overrides if still needed, but try to avoid */
+    #essayOutput, #newsOutput, #storyOutput, #descriptionOutput {
+        min-height: 200px; /* Slightly more for content generation tools */
+    }
+
+    .action-buttons .primary-button {
+        width: 100%; /* Full width buttons on small screens */
+        padding: 10px 20px;
+        font-size: 1rem;
+        margin-top: 10px; /* Adjust margin for stacking */
+    }
+}
+
+/* Very Small Screens (e.g., mobile landscape) */
+@media (max-width: 480px) {
+    .section-container {
+        padding: 20px 15px;
+    }
+    .section-heading {
+        font-size: 1.8rem;
+    }
+    .controls .primary-button { /* Target buttons in .controls specifically */
+        width: 100%;
+        margin: 10px 0;
+    }
+    .pie-chart {
+        width: 140px;
+        height: 140px;
+    }
+    .pie-chart::after {
+        width: 90px;
+        height: 90px;
+    }
+    .chart-label {
+        font-size: 1.8rem;
+    }
+}
+

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Story Generator - Summarizer.ai</title>
+    <meta name="description" content="Generate creative and engaging stories with AI. Choose genre, characters, and plot keywords.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2QWDFWwBCxN5V6qG/t3bLtmG6NvwK20R8T3M2t/FfD3M5C5S5P5M5P5M5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Specific styles for AI Story Generator, reusing general styles from style.css */
+        .tool-container {
+            display: flex;
+            flex-direction: column; /* Stack input/output vertically */
+            gap: 25px;
+            margin-top: 40px;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            align-items: center;
+            width: 100%; /* Full width */
+            max-width: 900px; /* Limit overall width */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .input-group, .text-area-group {
+            width: 100%; /* Full width for input groups and text areas */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative; /* For word counter positioning */
+        }
+
+        .input-group label, .text-area-group label {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .input-group input[type="text"],
+        .input-group select,
+        .text-area-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            line-height: 1.6;
+            font-family: 'Poppins', sans-serif;
+            color: #444;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group select:focus,
+        .text-area-group textarea:focus {
+            outline: none;
+            border-color: #6a1b9a; /* Highlight on focus */
+            box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.2);
+        }
+
+        .text-area-group textarea {
+            min-height: 250px; /* Increased height for story output */
+            resize: vertical;
+        }
+
+        .word-counter {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.9rem;
+            color: #777;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+
+        .primary-button {
+            background-image: linear-gradient(to right, #6a1b9a 0%, #8e24aa 100%);
+            color: #ffffff;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 15px; /* Space between text areas and button */
+        }
+
+        .primary-button:hover {
+            background-image: linear-gradient(to right, #8e24aa 0%, #6a1b9a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .primary-button:disabled {
+            background-image: linear-gradient(to right, #ccc 0%, #bbb 100%);
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: none;
+            box-shadow: none;
+        }
+        /* Loader and Error Message styles */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6a1b9a;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: none; /* Hidden by default */
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border: 1px solid #ef9a9a;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            display: none; /* Hidden by default */
+        }
+
+        /* Responsive Adjustments for Story Generator */
+        @media (max-width: 768px) {
+            .tool-container {
+                padding: 25px;
+                margin-top: 25px;
+            }
+
+            .text-area-group textarea {
+                min-height: 200px; /* Adjust height on smaller screens */
+            }
+
+            .primary-button {
+                width: 100%; /* Full width button on small screens */
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">Summarizer.ai</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/#more-tools">More Tools</a>
+            <a href="/#faq">FAQ</a>
+            <!-- Removed redundant /#contact link if not used or provided -->
+        </div>
+        <!-- Mobile Navigation Toggle (if applicable, ensure it matches style.css and script.js) -->
+        <div class="nav-toggle" id="navToggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
+
+    <section id="main-tool" class="section-container tool-section">
+        <h2 class="section-heading">AI Story Generator</h2>
+        <div class="tool-container">
+            <div class="input-group">
+                <label for="storyTopicInput">Story Topic / Keywords:</label>
+                <input type="text" id="storyTopicInput" placeholder="e.g., A magical forest adventure">
+            </div>
+            <div class="input-group">
+                <label for="storyGenreInput">Genre:</label>
+                <select id="storyGenreInput">
+                    <option value="">Select Genre (Optional)</option>
+                    <option value="Fantasy">Fantasy</option>
+                    <option value="Science Fiction">Science Fiction</option>
+                    <option value="Mystery">Mystery</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Historical Fiction">Historical Fiction</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="storyCharactersInput">Main Characters (Optional):</label>
+                <input type="text" id="storyCharactersInput" placeholder="e.g., Brave knight, wise wizard">
+            </div>
+            <div class="action-buttons">
+                <button id="generateStoryBtn" class="primary-button">Generate Story</button>
+            </div>
+            <div class="text-area-group">
+                <label for="storyOutput">Generated Story:</label>
+                <textarea id="storyOutput" placeholder="Your AI-generated story will appear here..." readonly></textarea>
+                <span id="outputCounter" class="word-counter">0 words</span>
+            </div>
+        </div>
+        <div id="loader" class="loader"></div>
+        <div id="errorMessage" class="error-message"></div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="footer-container section-container">
+            <div class="footer-column brand-info">
+                <div class="footer-logo">
+                    <!-- Corrected logo path to use url_for() -->
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Summarizer.AI Logo" class="logo-icon"> Summarizer.AI
+                </div>
+                <p>Summarize text online like professional writers with Top Notch AI-Summarizer.</p>
+                <div class="contact-info">
+                    <!-- Changed from direct paragraphs to a single mailto link for consistency with other pages -->
+                    <a href="mailto:support@summarizer.org">
+                        <i class="fa-solid fa-envelope"></i> support@summarizer.org
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-column">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="/">Summarizing Tool</a></li>
+                    <li><a href="#">Blogs</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">API Plan</a></li>
+                    <li><a href="#">API Documentation</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms & Conditions</a></li>
+                    <li><a href="#">Refund Policy</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Languages</h4>
+                <div class="language-selector">
+                    <select>
+                        <option value="en">🌐 English</option>
+                        <option value="ur">اردو Urdu</option>
+                    </select>
+                </div>
+                <h4 style="margin-top: 20px;">Address</h4>
+                <p>HR Tower, College Rd, Faisalabad</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="section-container footer-bottom-content">
+                <p>&copy; <span id="currentYearStoryGenerator"></span> Summarizer.ai - All Rights Reserved.</p>
+                <div class="social-icons">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Pinterest"><i class="fa-brands fa-pinterest-p"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='ai_story_generator_script.js') }}"></script>
+    <script>
+        // Update the current year in the footer
+        document.getElementById('currentYearStoryGenerator').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

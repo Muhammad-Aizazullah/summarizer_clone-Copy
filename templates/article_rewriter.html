@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Article Rewriter - Summarizer.ai</title>
+    <meta name="description" content="Rewrite articles to generate fresh, unique content with our AI Article Rewriter. Improve SEO and avoid plagiarism.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2QWDFWwBCxN5V6qG/t3bLtmG6NvwK20R8T3M2t/FfD3M5C5S5P5M5P5M5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Specific styles for AI Article Rewriter, if needed. */
+        .tool-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-top: 40px;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .summarizer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns for input/output */
+            gap: 25px; /* Space between textareas */
+        }
+
+        .text-area-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative; /* For counter positioning */
+        }
+
+        .text-area-container label {
+            font-weight: 600;
+            color: #1a237e;
+            font-size: 1.1rem;
+        }
+
+        .text-area-container textarea {
+            width: 100%;
+            min-height: 300px; /* Increased height for article content */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            transition: border-color 0.3s ease;
+            resize: vertical;
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+        }
+
+        .text-area-container textarea:focus {
+            outline: none;
+            border-color: #6a1b9a;
+            box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.2);
+        }
+
+        .text-area-container textarea[readonly] {
+            background-color: #f9f9f9;
+            cursor: default;
+        }
+
+        .counter {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #777;
+            margin-top: 8px;
+            height: 20px; /* Ensure space for counter */
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .controls button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background-image: linear-gradient(to right, #6a1b9a 0%, #8e24aa 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls button:hover {
+            background-image: linear-gradient(to right, #8e24aa 0%, #6a1b9a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        .controls button:disabled {
+            background-image: linear-gradient(to right, #ccc 0%, #bbb 100%);
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+
+        .slider-container label {
+            font-weight: 600;
+            color: #1a237e;
+            white-space: nowrap; /* Prevent label from breaking */
+        }
+
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+            /* Removed -webkit-appearance: none; as requested */
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+            opacity: 0.8;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            /* Removed -webkit-appearance: none; as requested */
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #6a1b9a;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #6a1b9a;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .slider-container #sliderValue {
+            font-weight: 500;
+            color: #555;
+            min-width: 40px; /* Ensure space for percentage value */
+            text-align: right;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6a1b9a;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border: 1px solid #ef9a9a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            display: none; /* Hidden by default */
+            width: 100%;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .summarizer-grid {
+                grid-template-columns: 1fr; /* Stack columns on small screens */
+            }
+
+            .tool-container {
+                padding: 30px 20px;
+                margin-top: 20px;
+            }
+
+            .text-area-container textarea {
+                min-height: 200px; /* Adjust height on smaller screens */
+            }
+
+            .controls button {
+                width: 100%; /* Full width button on small screens */
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+
+            .slider-container {
+                flex-direction: column; /* Stack slider elements vertically */
+                align-items: flex-start;
+                gap: 10px;
+                width: 100%;
+            }
+            .slider-container label, .slider-container #sliderValue {
+                width: 100%; /* Full width for label and value */
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">Summarizer.ai</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/#more-tools">More Tools</a>
+            <a href="/#faq">FAQ</a>
+        </div>
+        <div class="nav-toggle" id="navToggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
+
+    <section id="article-rewriter-tool" class="section-container">
+        <h1 class="section-heading">AI Article Rewriter</h1>
+        <main>
+            <div class="tool-container">
+                <div class="summarizer-grid">
+                    <div class="text-area-container">
+                        <label for="inputText">Original Article:</label>
+                        <textarea id="inputText" placeholder="Paste your article here to rewrite..."></textarea>
+                        <div class="counter" id="inputCounter">0 words</div>
+                    </div>
+                    <div class="text-area-container">
+                        <label for="outputText">Rewritten Article:</label>
+                        <textarea id="outputText" placeholder="Your rewritten article will appear here..." readonly></textarea>
+                        <div class="counter" id="outputCounter">0 words</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button id="rewriteBtn">Rewrite Article</button>
+                    <div class="slider-container">
+                        <label for="lengthSlider">Creativity/Length:</label>
+                        <input type="range" id="lengthSlider" min="20" max="80" value="50">
+                        <span id="sliderValue">50%</span>
+                    </div>
+                </div>
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+                <div class="loader" id="loader" style="display: none; margin: 20px auto;"></div>
+            </div>
+        </main>
+    </section>
+
+    <section id="rewriter-features" class="section-container">
+        <h2 class="section-heading">Why Choose Our Article Rewriter?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3>Generate Unique Content</h3>
+                <p>Create fresh, original versions of existing articles without plagiarism concerns.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Save Time & Effort</h3>
+                <p>Automate the rewriting process, allowing you to focus on other creative tasks.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3>Improve SEO</h3>
+                <p>Produce diverse content for your website, helping to boost your search engine rankings.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="rewriter-how-it-works" class="section-container">
+        <h2 class="section-heading">How Our Article Rewriter Works</h2>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-text">
+                    <h4>Paste Your Article</h4>
+                    <p>Copy and paste the article you wish to rewrite into the input text area.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">
+                    <h4>Adjust Settings</h4>
+                    <p>Use the slider to control the level of creativity and length of the rewritten output.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">
+                    <h4>Rewrite Instantly</h4>
+                    <p>Click 'Rewrite Article' and receive a unique, fresh version of your content.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="more-tools" class="section-container">
+        <h2 class="section-heading">Explore Our Other AI Tools</h2>
+        <div class="tools-grid">
+            <a href="{{ url_for('article_rewriter_page') }}" class="tool-card"> 
+                <div class="tool-icon">✍️</div>
+                <h3>Article Rewriter</h3>
+                <p>Rewrite articles to generate fresh, unique content.</p>
+            </a>
+            <a href="{{ url_for('paraphrasing_tool_page') }}" class="tool-card"> 
+                <div class="tool-icon">📝</div>
+                <h3>Paraphrasing Tool</h3>
+                <p>Rephrase sentences and paragraphs without changing their meaning.</p>
+            </a>
+            <a href="{{ url_for('plagiarism_checker_page') }}" class="tool-card"> 
+                <div class="tool-icon">📚</div>
+                <h3>Plagiarism Checker</h3>
+                <p>Ensure your content is original and free from plagiarism.</p>
+            </a>
+            <a href="{{ url_for('ai_humanizer_page') }}" class="tool-card"> 
+                <div class="tool-icon">🧑‍💻</div>
+                <h3>AI Text to Humanize</h3>
+                <p>Transform AI-generated text into natural, human-like content.</p>
+            </a>
+            <a href="{{ url_for('ai_email_generator_page') }}" class="tool-card"> 
+                <div class="tool-icon">📧</div>
+                <h3>AI Email Generator</h3>
+                <p>Generate professional and engaging emails quickly with AI.</p>
+            </a>
+            <a href="{{ url_for('content_idea_generator_page') }}" class="tool-card"> 
+                <div class="tool-icon">💡</div>
+                <h3>Content Idea Generator</h3>
+                <p>Generate creative and engaging ideas for your next content piece.</p>
+            </a>
+            <a href="{{ url_for('slogan_generator_page') }}" class="tool-card"> 
+                <div class="tool-icon">🏷️</div> 
+                <h3>AI Slogan Generator</h3>
+                <p>Create catchy and memorable slogans for your brand or campaign.</p>
+            </a>
+            <a href="{{ url_for('grammar_checker_page') }}" class="tool-card"> 
+                <div class="tool-icon">💬</div>
+                <h3>Grammar Checker</h3>
+                <p>Correct grammar, spelling, and punctuation errors instantly.</p>
+            </a>
+            <a href="{{ url_for('ai_story_generator_page') }}" class="tool-card">
+                <div class="tool-icon">📖</div>
+                <h3>AI Story Generator</h3>
+                <p>Generate creative and engaging stories with AI.</p>
+            </a>
+            <a href="{{ url_for('ai_product_description_generator_page') }}" class="tool-card">
+                <div class="tool-icon">🛍️</div>
+                <h3>AI Product Description Generator</h3>
+                <p>Create compelling product descriptions using AI.</p>
+            </a>
+            <a href="{{ url_for('essay_generator_page') }}" class="tool-card">
+                <div class="tool-icon">📄</div>
+                <h3>Essay Generator</h3>
+                <p>Generate well-structured essays on any topic with AI.</p>
+            </a>
+            <a href="{{ url_for('trending_news_generator_page') }}" class="tool-card">
+                <div class="tool-icon">📰</div>
+                <h3>Trending News Generator</h3>
+                <p>Stay updated with trending news generated by AI.</p>
+            </a>
+        </div>
+    </section>
+
+    <section id="faq" class="section-container">
+        <h2 class="section-heading">Frequently Asked Questions</h2>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>What is an Article Rewriter?</h3>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>An Article Rewriter is an AI-powered tool that paraphrases or rewrites existing content, changing words, phrases, and sentence structures to create a new, unique version while preserving the original meaning.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>How accurate is the rewritten content?</h3>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Our tool uses advanced AI to ensure high accuracy and coherence. While the content will be unique, it aims to retain the core message and flow of the original text. Always review the output for best results.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>Can it bypass plagiarism checks?</h3>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>The Article Rewriter generates unique text by rephrasing, which significantly reduces similarity to the original. This helps in passing plagiarism checks, but it's always recommended to use a plagiarism checker (like ours!) to confirm originality.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>Is there a word limit for rewriting?</h3>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>The tool is optimized for typical article lengths. For very long texts, breaking them into smaller sections might yield better and faster results.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="footer-container section-container">
+            <div class="footer-column brand-info">
+                <div class="footer-logo">
+                    <!-- Corrected logo path to use url_for() -->
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Summarizer.AI Logo" class="logo-icon"> Summarizer.AI
+                </div>
+                <p>Summarize text online like professional writers with Top Notch AI-Summarizer.</p>
+                <div class="contact-info">
+                    <a href="mailto:support@summarizer.org">
+                        <i class="fa-solid fa-envelope"></i> support@summarizer.org
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-column">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="/">Summarizing Tool</a></li>
+                    <li><a href="#">Blogs</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">API Plan</a></li>
+                    <li><a href="#">API Documentation</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms & Conditions</a></li>
+                    <li><a href="#">Refund Policy</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Languages</h4>
+                <div class="language-selector">
+                    <select>
+                        <option value="en">🌐 English</option>
+                        <option value="ur">اردو Urdu</option>
+                    </select>
+                </div>
+                <h4 style="margin-top: 20px;">Address</h4>
+                <p>HR Tower, College Rd, Faisalabad</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="section-container footer-bottom-content">
+                <p>&copy; <span id="currentYearArticleRewriter"></span> Summarizer.ai - All Rights Reserved.</p>
+                <div class="social-icons">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Pinterest"><i class="fa-brands fa-pinterest-p"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='article_rewriter_script.js') }}"></script>
+    <script>
+        document.getElementById('currentYearArticleRewriter').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
