@@ -12,13 +12,21 @@ from flask_cors import CORS
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM, T5Tokenizer
 import torch
 
+# Logging configuration
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# --- Gemini API Configuration ---
 try:
     import google.generativeai as genai
-    # *** YAHAN CHANGE KIYA GAYA HAI ***
-    # API key ko environment variable se load kiya ja raha hai
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    logging.info("Google Generative AI library loaded and configured.")
-    GEMINI_API_AVAILABLE = True
+    # Ensure GEMINI_API_KEY is loaded from environment variables for security
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if gemini_api_key:
+        genai.configure(api_key=gemini_api_key)
+        logging.info("Google Generative AI library loaded and configured from environment variable.")
+        GEMINI_API_AVAILABLE = True
+    else:
+        logging.warning("GEMINI_API_KEY environment variable not set. Gemini functions will not work.")
+        GEMINI_API_AVAILABLE = False
 except ImportError:
     logging.warning("Google Generative AI library not found. Gemini functions will not work.")
     GEMINI_API_AVAILABLE = False
@@ -26,20 +34,16 @@ except Exception as e:
     logging.error(f"Error configuring Gemini API: {e}. Gemini functions might not work.")
     GEMINI_API_AVAILABLE = False
 
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+# --- NLTK Data Setup ---
+# Set NLTK data directory to be inside the project for deployment
 nltk_data_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'nltk_data')
 if not os.path.exists(nltk_data_dir):
     os.makedirs(nltk_data_dir)
-    logging.info(f"Created NLTK data directory: {nltk_data_dir}")
+    logging.info(f"Created NLTK data directory at {nltk_data_dir}")
+# Add the custom NLTK data path
 nltk.data.path.append(nltk_data_dir)
-logging.info(f"NLTK data path added: {nltk_data_dir}")
 
+# Function to ensure NLTK data is downloaded
 def ensure_nltk_data():
     try:
         nltk.data.find('tokenizers/punkt')
@@ -57,19 +61,26 @@ def ensure_nltk_data():
         nltk.download('stopwords', download_dir=nltk_data_dir)
         logging.info("NLTK 'stopwords' corpus downloaded.")
 
+# Ensure NLTK data is available on startup
 ensure_nltk_data()
 
+# --- Flask App Setup ---
 app = Flask(__name__, static_folder='static', template_folder='templates')
-CORS(app)
+CORS(app) # Enable CORS for frontend interaction
 
+# --- Global Model Variables ---
 summarizer_tokenizer = None
 summarizer_model = None
 paraphraser_tokenizer = None
 paraphraser_model = None
+essay_tokenizer = None
+essay_model = None
 
+# Determine the device for PyTorch models
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-logging.info(f"Using device: {DEVICE}")
+logging.info(f"Using device for HuggingFace models: {DEVICE}")
 
+# --- Model Loading Functions ---
 def load_summarizer_model():
     """Loads the T5-small model and tokenizer for summarization."""
     global summarizer_tokenizer, summarizer_model
@@ -78,7 +89,7 @@ def load_summarizer_model():
             logging.info("Loading summarizer model (t5-small)...")
             summarizer_tokenizer = T5Tokenizer.from_pretrained("t5-small")
             summarizer_model = AutoModelForSeq2SeqLM.from_pretrained("t5-small").to(DEVICE)
-            logging.info("Summarizer model loaded successfully.")
+            logging.info("Summarizer model (t5-small) loaded successfully.")
         except Exception as e:
             logging.error(f"Error loading summarizer model: {e}")
             summarizer_tokenizer = None
@@ -93,18 +104,37 @@ def load_paraphraser_model():
             logging.info("Loading paraphraser model (t5-small)...")
             paraphraser_tokenizer = T5Tokenizer.from_pretrained("t5-small")
             paraphraser_model = AutoModelForSeq2SeqLM.from_pretrained("t5-small").to(DEVICE)
-            logging.info("Paraphraser model loaded successfully.")
+            logging.info("Paraphraser model (t5-small) loaded successfully.")
         except Exception as e:
             logging.error(f"Error loading paraphraser model: {e}")
             paraphraser_tokenizer = None
             paraphraser_model = None
     return paraphraser_tokenizer, paraphraser_model
 
+def load_essay_model():
+    """Loads a GPT-2 model and tokenizer for essay generation."""
+    global essay_tokenizer, essay_model
+    if essay_model is None:
+        try:
+            logging.info("Loading essay generation model (gpt2)...")
+            essay_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+            essay_model = AutoModelForCausalLM.from_pretrained("gpt2").to(DEVICE)
+            # Set pad_token_id for GPT2 if not set, important for generation
+            if essay_tokenizer.pad_token is None:
+                essay_tokenizer.pad_token = essay_tokenizer.eos_token
+            logging.info("Essay generation model (gpt2) loaded successfully.")
+        except Exception as e:
+            logging.error(f"Error loading essay generation model: {e}")
+            essay_tokenizer = None
+            essay_model = None
+    return essay_tokenizer, essay_model
+
 def get_gemini_model():
     """Helper function to get a Gemini model that supports generateContent."""
     if not GEMINI_API_AVAILABLE:
-        raise Exception("Gemini API is not available.")
+        raise Exception("Gemini API is not available or not configured.")
     
+    # Prioritize gemini-2.0-flash if available and supports content generation
     available_models = [m for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
     selected_model_name = None
     for model_info in available_models:
@@ -113,88 +143,111 @@ def get_gemini_model():
             break
     
     if not selected_model_name:
+        # Fallback to gemini-pro if flash is not found or not suitable
+        for model_info in available_models:
+            if 'gemini-pro' in model_info.name:
+                selected_model_name = model_info.name
+                break
+    
+    if not selected_model_name:
         if available_models:
             selected_model_name = available_models[0].name
-            logging.warning(f"gemini-2.0-flash not found. Using available model: {selected_model_name}")
+            logging.warning(f"No preferred Gemini model found. Using available model: {selected_model_name}")
         else:
             raise Exception("No Gemini model found that supports content generation.")
     
     return genai.GenerativeModel(selected_model_name)
 
+# --- Core AI Functionalities (Using HuggingFace models and Gemini API) ---
+
 def summarize_text(text, max_length_ratio=0.5):
-    """Summarizes the given text using the Gemini model."""
-    if not GEMINI_API_AVAILABLE:
-        logging.error("Gemini API is not available for summarization.")
-        return f"Error: Gemini API not configured for summarization."
+    """Summarizes the given text using the HuggingFace T5-small model (or falls back to Gemini if T5 fails)."""
+    tokenizer, model = load_summarizer_model()
+    if model is None:
+        logging.warning("T5-small summarizer model not loaded. Attempting summarization with Gemini.")
+        if not GEMINI_API_AVAILABLE:
+            logging.error("Gemini API not configured and T5-small model not loaded for summarization.")
+            return f"Error: No summarization model available."
+        
+        # Fallback to Gemini if T5 model cannot be loaded
+        try:
+            gemini_model = get_gemini_model()
+            prompt = f"Summarize the following text concisely:\n---\n{text}\n---"
+            response = gemini_model.generate_content(prompt)
+            return response.text.strip() if hasattr(response, 'text') and response.text else "No summary generated by Gemini."
+        except Exception as e:
+            logging.error(f"Error summarizing with Gemini fallback: {e}")
+            return f"Error: Summarization failed with Gemini fallback. Details: {str(e)}"
 
     try:
-        model = get_gemini_model()
+        input_text = "summarize: " + text
+        inputs = tokenizer.encode(input_text, return_tensors="pt", max_length=1024, truncation=True).to(DEVICE)
         
-        input_length = len(text.split())
-        min_summary_words = max(20, int(input_length * (max_length_ratio - 0.2)))
-        max_summary_words = max(min_summary_words + 10, int(input_length * max_length_ratio))
+        input_length = len(tokenizer.tokenize(text)) # Use tokenizer to estimate token length
+        min_summary_length = max(20, int(input_length * (max_length_ratio - 0.2)))
+        max_summary_length = max(min_summary_length + 20, int(input_length * max_length_ratio)) # Ensure max is greater than min
 
-        prompt = (
-            f"Please summarize the following text concisely. The summary should be between "
-            f"{min_summary_words} and {max_summary_words} words, maintaining the core information.\n\n"
-            f"Original text:\n---\n{text}\n---\n\nSummary:"
+        summary_ids = model.generate(
+            inputs,
+            min_length=min_summary_length,
+            max_length=max_summary_length,
+            num_beams=4,
+            early_stopping=True
         )
-        
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                top_p=0.8,
-                top_k=30,
-                candidate_count=1,
-            )
-        )
-        
-        if response.text:
-            summary_text = response.text.strip()
-            summary_text = re.sub(r'^(Summary:)?\s*', '', summary_text, flags=re.IGNORECASE).strip()
-            return summary_text
-        elif response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
-            summary_text = response.candidates[0].content.parts[0].text.strip()
-            summary_text = re.sub(r'^(Summary:)?\s*', '', summary_text, flags=re.IGNORECASE).strip()
-            return summary_text
-        else:
-            return "No summary could be generated by Gemini. Try different input."
-
+        summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+        return summary.strip()
     except Exception as e:
-        logging.error(f"Error summarizing text with Gemini: {e}", exc_info=True)
-        return f"Error: Summarization failed with Gemini. Details: {str(e)}"
+        logging.error(f"Error summarizing text with T5-small: {e}", exc_info=True)
+        return f"Error: Summarization failed with T5-small. Details: {str(e)}"
 
 
 def rewrite_article(text, creativity=0.5):
-    """Rewrites/paraphrases the given text using the loaded paraphraser model."""
+    """Rewrites/paraphrases the given text using the loaded paraphraser model (or falls back to Gemini)."""
     tokenizer, model = load_paraphraser_model()
     if model is None:
-        return "Error: Paraphraser model not loaded."
+        logging.warning("T5-small paraphraser model not loaded. Attempting rewriting with Gemini.")
+        if not GEMINI_API_AVAILABLE:
+            logging.error("Gemini API not configured and T5-small model not loaded for rewriting.")
+            return f"Error: No rewriting model available."
+        
+        # Fallback to Gemini if T5 model cannot be loaded
+        try:
+            gemini_model = get_gemini_model()
+            prompt = f"Rewrite the following text to make it unique and engaging:\n---\n{text}\n---"
+            response = gemini_model.generate_content(prompt)
+            return response.text.strip() if hasattr(response, 'text') and response.text else "No rewritten text generated by Gemini."
+        except Exception as e:
+            logging.error(f"Error rewriting with Gemini fallback: {e}")
+            return f"Error: Rewriting failed with Gemini fallback. Details: {str(e)}"
 
-    input_text = text
-    tokenized_text = tokenizer.encode(input_text, return_tensors="pt").to(DEVICE)
+    try:
+        input_text = "paraphrase: " + text
+        tokenized_text = tokenizer.encode(input_text, return_tensors="pt", max_length=512, truncation=True).to(DEVICE)
 
-    temperature = 0.5 + (creativity * 0.5) 
+        temperature = 0.5 + (creativity * 0.5) 
 
-    output_ids = model.generate(
-        tokenized_text,
-        max_length=int(tokenized_text.shape[1] * 1.2) + 50,
-        min_length=int(tokenized_text.shape[1] * 0.8),
-        num_beams=5,
-        no_repeat_ngram_size=2,
-        early_stopping=True,
-        do_sample=True,
-        temperature=temperature,
-        top_k=50,
-        top_p=0.95
-    )
-    rewritten_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        output_ids = model.generate(
+            tokenized_text,
+            max_length=int(tokenized_text.shape[1] * 1.2) + 50, # Allow some expansion
+            min_length=int(tokenized_text.shape[1] * 0.8),    # Ensure minimum length
+            num_beams=5,
+            no_repeat_ngram_size=2,
+            early_stopping=True,
+            do_sample=True,
+            temperature=temperature,
+            top_k=50,
+            top_p=0.95
+        )
+        rewritten_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-    rewritten_text = re.sub(r'\s*([.,;!?])', r'\1', rewritten_text)
-    rewritten_text = re.sub(r'\n+', '\n', rewritten_text).strip()
+        # Basic cleanup
+        rewritten_text = re.sub(r'\s*([.,;!?])', r'\1', rewritten_text)
+        rewritten_text = re.sub(r'\n+', '\n', rewritten_text).strip()
 
-    return rewritten_text
+        return rewritten_text
+    except Exception as e:
+        logging.error(f"Error rewriting text with T5-small: {e}", exc_info=True)
+        return f"Error: Rewriting failed with T5-small. Details: {str(e)}"
 
 
 def humanize_text_content(text, creativity_level=0.7):
@@ -501,21 +554,35 @@ def check_plagiarism_and_ai(text):
     }
 
 def generate_essay_content(topic, length="medium", style="formal"):
-    """Generates essay content using the Gemini model."""
+    """Generates essay content using the Gemini model (or falls back to GPT-2 if Gemini fails)."""
     if not GEMINI_API_AVAILABLE:
-        logging.error("Gemini API is not available for essay generation.")
-        return "Error: Gemini API not configured for essay generation."
+        logging.warning("Gemini API is not available for essay generation. Attempting with GPT-2.")
+        tokenizer, model = load_essay_model()
+        if model is None:
+            logging.error("GPT-2 model not loaded for essay generation.")
+            return "Error: No essay generation model available."
+        
+        try:
+            # Simple GPT-2 generation fallback
+            inputs = tokenizer.encode(topic, return_tensors='pt', max_length=512, truncation=True).to(DEVICE)
+            essay_ids = model.generate(inputs, max_length=500, num_return_sequences=1, do_sample=True, top_k=50, top_p=0.95, pad_token_id=tokenizer.eos_token_id)
+            essay = tokenizer.decode(essay_ids[0], skip_special_tokens=True)
+            return essay.strip()
+        except Exception as e:
+            logging.error(f"Error generating essay with GPT-2 fallback: {e}")
+            return f"Error: Essay generation failed with GPT-2 fallback. Details: {str(e)}"
 
-    length_map = {
-        "short": "around 200-300 words",
-        "medium": "around 500-700 words",
-        "long": "around 1000-1200 words"
-    }
-    word_count_target = length_map.get(length, "a reasonable length (500-700 words)")
 
     try:
         model = get_gemini_model()
         
+        length_map = {
+            "short": "around 200-300 words",
+            "medium": "around 500-700 words",
+            "long": "around 1000-1200 words"
+        }
+        word_count_target = length_map.get(length, "a reasonable length (500-700 words)")
+
         prompt = (
             f"Write an essay on the topic: '{topic}'.\n"
             f"The essay should be {word_count_target} and written in a {style} style. "
@@ -628,21 +695,35 @@ def generate_product_description_content(product_name, features, audience, tone=
         return f"Error: Product description generation failed with Gemini. Details: {str(e)}"
 
 def generate_story_content(genre, characters, plot_keywords, length="medium"):
-    """Generates a short story using the Gemini model."""
+    """Generates a short story using the Gemini model (or falls back to GPT-2 if Gemini fails)."""
     if not GEMINI_API_AVAILABLE:
-        logging.error("Gemini API is not available for story generation.")
-        return "Error: Gemini API not configured for story generation."
-
-    length_map = {
-        "short": "a short story (approx. 500 words)",
-        "medium": "a medium-length story (approx. 1000 words)",
-        "long": "a longer story (approx. 2000 words)"
-    }
-    word_count_target = length_map.get(length, "a medium-length story (approx. 1000 words)")
+        logging.warning("Gemini API is not available for story generation. Attempting with GPT-2.")
+        tokenizer, model = load_essay_model() # Using essay_model (GPT-2) as a general text generation fallback
+        if model is None:
+            logging.error("GPT-2 model not loaded for story generation.")
+            return "Error: No story generation model available."
+        
+        try:
+            # Simple GPT-2 generation fallback
+            story_prompt = f"Write a {genre} story with characters {characters} and plot elements {plot_keywords}."
+            inputs = tokenizer.encode(story_prompt, return_tensors='pt', max_length=1024, truncation=True).to(DEVICE)
+            story_ids = model.generate(inputs, max_length=1000, num_return_sequences=1, do_sample=True, top_k=50, top_p=0.95, pad_token_id=tokenizer.eos_token_id)
+            story = tokenizer.decode(story_ids[0], skip_special_tokens=True)
+            return story.strip()
+        except Exception as e:
+            logging.error(f"Error generating story with GPT-2 fallback: {e}")
+            return f"Error: Story generation failed with GPT-2 fallback. Details: {str(e)}"
 
     try:
         model = get_gemini_model()
         
+        length_map = {
+            "short": "a short story (approx. 500 words)",
+            "medium": "a medium-length story (approx. 1000 words)",
+            "long": "a longer story (approx. 2000 words)"
+        }
+        word_count_target = length_map.get(length, "a medium-length story (approx. 1000 words)")
+
         prompt = (
             f"Write {word_count_target} in the '{genre}' genre.\n"
             f"Main characters: {characters}\n"
@@ -711,6 +792,7 @@ def generate_trending_news_summary_content(keywords):
         logging.error(f"Error generating trending news summary with Gemini: {e}", exc_info=True)
         return f"Error: Trending news summary generation failed with Gemini. Details: {str(e)}"
 
+# --- Flask Routes (Frontend Endpoints) ---
 @app.route('/')
 def index():
     logging.info("Serving index.html")
@@ -776,6 +858,8 @@ def trending_news_generator_page():
     logging.info("Serving trending_news_generator.html")
     return render_template('trending_news_generator.html')
 
+
+# --- API Endpoints ---
 
 @app.route('/api/summarize', methods=['POST'])
 def summarize_api():
@@ -1087,9 +1171,11 @@ def generate_trending_news_api():
         logging.error(humanized_text, exc_info=True)
         return jsonify({"news_summary": "", "error": humanized_text}), 500
 
-
+# --- Main Application Run ---
 if __name__ == '__main__':
-    logging.info("Starting Flask development server. (Main process)")
+    logging.info("Starting Flask development server. (This should not run in production on Railway, Gunicorn will handle it)")
+    # Load models explicitly when running in development mode
     load_summarizer_model()
     load_paraphraser_model()
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    load_essay_model() # Load GPT-2 model here
+    app.run(debug=True, host='0.0.0.0', port=os.getenv("PORT", 5000))
